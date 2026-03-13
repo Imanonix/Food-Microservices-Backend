@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # ۱. دیتابیس منگو (برای کاتالوگ غذا)
+  catalog-db:
+    image: mongo:latest
+    container_name: catalog-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - foodorder-network
+  # سرویس مدیریت لاگ‌ها
+  seq:
+    image: datalust/seq:latest
+    container_name: seq_logs
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    ports:
+      - "5341:80"  # پورت ارسال لاگ از اپلیکیشن
+      - "8081:80"  # پورت مشاهده پنل وب (اختیاری)
+    volumes:
+      - seq_data:/data
+    networks:
+      - foodorder-network
+
+  # ۲. سرویس ردیس (برای کشینگ)
+  cache-service:
+    image: redis:latest 
+    container_name: food-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - foodorder-network
+
+  # ۳. سرویس رابیت‌ام‌کیو
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: foodorder-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - foodorder-network
+
+networks:
+  foodorder-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  rabbitmq_data: 
+  seq_data:
